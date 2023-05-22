@@ -2,7 +2,7 @@
 
 `phayes` is a python package for easy and efficient quantum phase estimation and quantum amplitude estimation.
 
-![hadamard_qpe_circuit](examples/hadamard_qpe_circuit.png)
+![hadamard_qpe_circuit](examples/hadamard_qpe_circuit.png | width=100)
 
 Both quantum phase estimation
 [Wiebe et al, 2015](https://arxiv.org/abs/1508.00869),
@@ -53,14 +53,12 @@ pdf = phayes.pdf(linsp, posterior_state)
 plt.plot(linsp, pdf)
 ```
 
-![posterior](examples/bpe_posterior.png)
+![posterior](examples/bpe_posterior.png | width=100)
 
 
-`phayes` can also select the optimal $k$ and $\beta$ for you as well as a host of other 
-useful functions
+`phayes` also has a host of other useful functions
 
 ```python
-next_k, next_beta = phayes.get_k_and_beta(posterior_state)
 posterior_mean = phayes.circular_mean(posterior_state)
 posterior_circular_variance = phayes.circular_variance(posterior_state)
 posterior_holevo_variance = phayes.holevo_variance(posterior_state)
