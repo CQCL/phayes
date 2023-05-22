@@ -2,6 +2,7 @@
 
 `phayes` is a python package for easy and efficient quantum phase estimation and quantum amplitude estimation.
 
+![hadamard_qpe_circuit](examples/hadamard_qpe_circuit.png)
 
 Both quantum phase estimation
 [Wiebe et al, 2015](https://arxiv.org/abs/1508.00869),
@@ -16,26 +17,36 @@ Starting with a uniform prior over $\phi$, `phayes` uses Bayesian inference to h
 
 ## Bayesian updates
 
-The core function is `phayes.update`, which updates the posterior distribution in light of a new measurement or series of measurements
+The core functions are `phayes.get_k_and_beta` and `phayes.update`, which determine the experiment parameters and then update the posterior distribution in light of a new measurement (or series of measurements)
 
 ```python
 from jax import numpy as jnp
 import phayes
 
+num_shots = 100
+
+posterior_state = phayes.init()
+for shot_ind in range(num_shots):
+    k, beta = phayes.get_k_and_beta(posterior_state)
+    m = get_shot(k, beta)
+    posterior_state = phayes.update(posterior_state, m, k, beta)
+```
+Here the function `get_shot` executes the quantum circuit above and returns a binary shot (or multiple shots) according the likelihood $p(m\mid \phi, k, \beta)$.
+
+
+
+## There's more
+
+The probability density function can be visualised easily
+
+```python
 prior_state = phayes.init()
 m = jnp.array([0, 1, 1, 0, 0, 1])
 k = jnp.array([1, 4, 3, 8, 5, 10])
 beta = jnp.array([1.4, 0.6, 1.2, 1.1, 1.9, 0.3])
 
 posterior_state = phayes.update(prior_state, m, k, beta)
-```
 
-
-## and more
-
-The probability density function can be visualised easily
-
-```python
 import matplotlib.pyplot as plt
 linsp = jnp.linspace(-jnp.pi, jnp.pi, 1000)
 pdf = phayes.pdf(linsp, posterior_state)
