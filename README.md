@@ -26,7 +26,7 @@ import phayes
 num_shots = 100
 
 posterior_state = phayes.init()
-for shot_ind in range(num_shots):
+for _ in range(num_shots):
     k, beta = phayes.get_k_and_beta(posterior_state)
     m = get_shot(k, beta)
     posterior_state = phayes.update(posterior_state, m, k, beta)
