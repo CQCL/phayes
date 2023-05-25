@@ -1,6 +1,6 @@
-from typing import NamedTuple, Tuple, Union
+from typing import NamedTuple, Tuple, Union, Callable
 
-from jax import numpy as jnp
+from jax import numpy as jnp, vmap
 from jax.lax import cond, fori_loop
 
 from phayes import fourier
@@ -87,12 +87,15 @@ def _update_single(
     deflation: float,
 ) -> PhayesState:
     J = prior_state.fourier_coefficients.shape[1]
-    
+
     # J_prior = last index of non-zero coefficient + 1
-    J_prior = jnp.maximum(
-        _last_true_index(prior_state.fourier_coefficients[0], treat_as_zero),
-        _last_true_index(prior_state.fourier_coefficients[1], treat_as_zero),
-    ) + 1
+    J_prior = (
+        jnp.maximum(
+            _last_true_index(prior_state.fourier_coefficients[0], treat_as_zero),
+            _last_true_index(prior_state.fourier_coefficients[1], treat_as_zero),
+        )
+        + 1
+    )
     convert = prior_state.fourier_mode * ((J_prior + k) > J)
 
     prior_state = cond(
@@ -123,8 +126,8 @@ def update(
     m: jnp.ndarray,
     k: jnp.ndarray,
     beta: float,
-    error_rate: float = 0.0,
-    treat_as_zero: float = 0.,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
+    treat_as_zero: float = 0.0,
     deflation: float = 1.0,
 ) -> PhayesState:
     """
@@ -146,6 +149,7 @@ def update(
         k: Vector of integer exponents (or single integer if the same across measurements)
         beta: Vector of phase shifts in [0, 2π) (or single float if the same across measurements)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
         treat_as_zero: For conversion from Fourier to von Mises
             Fourier cofficients less than the treat_as_zero parameter will be treated as 0
         deflation: Deflation parameter in (0, 1], for conversion from Fourier to von Mises
@@ -158,12 +162,17 @@ def update(
     m = jnp.atleast_1d(jnp.array(m, dtype=int))
     k = jnp.array(k) * jnp.ones(m.size, dtype=int)
     beta = jnp.array(beta) * jnp.ones(m.size)
+
+    if callable(error_rate):
+        error_rate = vmap(error_rate)(k)
     error_rate = jnp.array(error_rate) * jnp.ones(m.size)
+
     return fori_loop(
         0,
         m.size,
-        lambda r, ps: _update_single(ps, m[r], k[r], beta[r], error_rate[r],
-                                     treat_as_zero, deflation),
+        lambda r, ps: _update_single(
+            ps, m[r], k[r], beta[r], error_rate[r], treat_as_zero, deflation
+        ),
         prior_state,
     )
 
@@ -330,7 +339,9 @@ def get_beta_given_k(state: PhayesState, k: int, error_rate: float = 0.0) -> flo
 
 
 def get_k_and_beta(
-    state: PhayesState, error_rate: float = 0.0, k_max: int = jnp.inf
+    state: PhayesState,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
+    k_max: int = jnp.inf,
 ) -> float:
     """
     Calculates k and beta that minimise the expected circular variance of a single update.
@@ -339,6 +350,7 @@ def get_k_and_beta(
         PhayesState
             (namedtuple with fields: fourier_mode, fourier_coefficients, von_mises_parameters)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
         k_max: Maximum k to consider
 
     Returns:

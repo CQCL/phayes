@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple, Union, Callable
 from jax import numpy as jnp
 from jax.lax import fori_loop
 from jax.scipy import special
@@ -411,7 +411,10 @@ def von_mises_get_beta_given_k(
 
 
 def von_mises_get_k_and_beta(
-    mu: jnp.ndarray, kappa: float, error_rate: float = 0.0, k_max: int = jnp.inf
+    mu: jnp.ndarray,
+    kappa: float,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
+    k_max: int = jnp.inf,
 ) -> Tuple[int, float]:
     """
     Calculates k and beta that minimise the expected circular variance of a single update.
@@ -420,22 +423,28 @@ def von_mises_get_k_and_beta(
         mu: Prior von Mises mean parameter, float in [0, 2π)
         kappa: Prior von Mises concentration parameter, float in [0, ∞)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
         k_max: Maximum k to consider
 
     Returns:
         Tuple of (k, beta) with k in {1, ..., k_max} and beta in [0, π)
 
     """
+    if callable(error_rate):
+        error_rate_func = error_rate
+    else:
+        error_rate_func = lambda _: error_rate
+
     k_mid = 1 / jnp.sqrt(von_mises_holevo_variance(kappa))
     k_l = jnp.floor(k_mid).astype(float)
     k_u = k_l + 1.0
 
-    beta_l, ecv_l = von_mises_get_beta_given_k(mu, kappa, k_l, error_rate)
-    beta_u, ecv_u = von_mises_get_beta_given_k(mu, kappa, k_u, error_rate)
+    beta_l, ecv_l = von_mises_get_beta_given_k(mu, kappa, k_l, error_rate_func(k_l))
+    beta_u, ecv_u = von_mises_get_beta_given_k(mu, kappa, k_u, error_rate_func(k_u))
 
     k_out = jnp.where(ecv_l > ecv_u, k_l, k_u)
     beta_out = jnp.where(ecv_l > ecv_u, beta_l, beta_u)
 
     k_out = jnp.where(k_out > k_max, k_max, k_out).astype(int)
-    beta_out = von_mises_get_beta_given_k(mu, kappa, k_out, error_rate)[0]
+    beta_out = von_mises_get_beta_given_k(mu, kappa, k_out, error_rate_func(k_out))[0]
     return k_out, beta_out

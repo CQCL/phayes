@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple, Union, Callable
 from jax import numpy as jnp, vmap
 from jax.lax import fori_loop
 from .maximise import maximise_expected_circular_variance
@@ -510,7 +510,7 @@ def fourier_get_beta_given_k(
 
 def fourier_get_k_and_beta(
     prior_fourier_coefficients: jnp.ndarray,
-    error_rate: float = 0.0,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
     k_max: int = jnp.inf,
 ) -> Tuple[int, float]:
     """
@@ -520,15 +520,22 @@ def fourier_get_k_and_beta(
         prior_fourier_coefficients: Array of shape (2, J) storing prior coefficients
             First row for cosine, second for sine.
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
         k_max: Maximum k to consider
 
     Returns:
         Tuple of (k, beta) with k in {1, ..., min(J, k_max)} and beta in [0, π)
 
     """
+    if callable(error_rate):
+        error_rate_func = error_rate
+    else:
+        error_rate_func = lambda _: error_rate
+
     J = prior_fourier_coefficients.shape[1] + 1
-    betas, utils = vmap(fourier_get_beta_given_k, in_axes=(None, 0, None))(
-        prior_fourier_coefficients, jnp.arange(1, J), error_rate
+    error_rates = vmap(error_rate_func)(jnp.arange(1, J))
+    betas, utils = vmap(fourier_get_beta_given_k, in_axes=(None, 0, 0))(
+        prior_fourier_coefficients, jnp.arange(1, J), error_rates
     )
     utils = jnp.where(jnp.arange(1, J) > k_max, -jnp.inf, utils)
 
