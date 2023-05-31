@@ -56,7 +56,6 @@ plt.plot(linsp, pdf)
 <img src="examples/bpe_posterior.png" width="500">
 
 
-
 `phayes` also has a host of other useful functions
 
 ```python
@@ -76,4 +75,16 @@ adding the following to the top of your script
 ```python
 from jax.config import config
 config.update(“jax_enable_x64”, True)
+```
+
+
+## Citation
+
+```
+@software{phayes,
+author={Duffield, Samuel},
+title={phayes: A python package for easy and efficient quantum phase estimation},
+year={2023},
+url={https://github.com/SamDuffield/phayes}
+}
 ```
