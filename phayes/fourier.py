@@ -9,7 +9,7 @@ def fourier_update(
     m: Union[int, jnp.ndarray],
     k: Union[int, jnp.ndarray],
     beta: Union[float, jnp.ndarray],
-    error_rate: float = 0.0,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> jnp.ndarray:
     """
     Applies a posterior update based on the measurements of a phase estimation experiment.
@@ -32,6 +32,7 @@ def fourier_update(
         k: Vector of integer exponents (or single integer if the same across measurements)
         beta: Vector of phase shifts in [0, 2π) (or single float if the same across measurements)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         posterior Fourier coefficients: Array of shape (2, J)
@@ -40,7 +41,11 @@ def fourier_update(
     m = jnp.atleast_1d(jnp.array(m, dtype=int))
     k = jnp.array(k) * jnp.ones(m.size, dtype=int)
     beta = jnp.array(beta) * jnp.ones(m.size)
+    
+    if callable(error_rate):
+        error_rate = vmap(error_rate)(k)
     error_rate = jnp.array(error_rate) * jnp.ones(m.size)
+    
     return fori_loop(
         0,
         m.size,
@@ -316,7 +321,7 @@ def fourier_evidence(
     m: int,
     k: int,
     beta: float,
-    error_rate: float = 0.0,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Evaluates p(m | k, beta) = ∫p(phi) p(m | phi, k, beta) dphi
@@ -329,11 +334,15 @@ def fourier_evidence(
         k: Integer exponent
         beta: Phase shift in [0, 2π)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         Float value in [0, ∞) for p(m | k, beta)
 
     """
+    if callable(error_rate):
+        error_rate = error_rate(k)
+    
     k = jnp.array(k, dtype=int)
     gamma = beta - m * jnp.pi
     cos_gamma = jnp.cos(gamma) * (1 - error_rate)
@@ -374,7 +383,7 @@ def fourier_posterior_c1s1(
     m: int,
     k: int,
     beta: float,
-    error_rate: float = 0.0,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> Tuple[float, float]:
     """
     Evaluates only the first two coefficients of a single update posterior p(phi | m, k, beta).
@@ -386,11 +395,15 @@ def fourier_posterior_c1s1(
         k: Integer exponent
         beta: Phase shift in [0, 2π)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         float value in [0, ∞) for p(m | k, beta)
 
     """
+    if callable(error_rate):
+        error_rate = error_rate(k)
+    
     ckm1, ckp1, skm1, skp1 = _c1s1_coeffs(prior_fourier_coefficients, k, error_rate)
 
     gamma = beta - m * jnp.pi
@@ -419,7 +432,7 @@ def fourier_expected_posterior_circular_variance(
     prior_fourier_coefficients: jnp.ndarray,
     k: int,
     beta: float,
-    error_rate: float = 0.0,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Calculates expected circular variance of the single update posterior distribution.
@@ -432,11 +445,15 @@ def fourier_expected_posterior_circular_variance(
         k: Integer exponent
         beta: Phase shift in [0, 2π)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         float value in [0, 1]
 
     """
+    if callable(error_rate):
+        error_rate = error_rate(k)
+    
     m0_c1s1 = fourier_posterior_c1s1(prior_fourier_coefficients, 0, k, beta, error_rate)
     m0_cvar = fourier_circular_variance(m0_c1s1)
     m0_evidence = fourier_evidence(prior_fourier_coefficients, 0, k, beta, error_rate)
@@ -451,7 +468,7 @@ def fourier_expected_posterior_holevo_variance(
     prior_fourier_coefficients: jnp.ndarray,
     k: int,
     beta: float,
-    error_rate: float = 0.0,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Calculates expected Holevo variance of the single update posterior distribution.
@@ -464,11 +481,15 @@ def fourier_expected_posterior_holevo_variance(
         k: Integer exponent
         beta: Phase shift in [0, 2π)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         float value in [0, ∞)
 
     """
+    if callable(error_rate):
+        error_rate = error_rate(k)
+    
     m0_c1s1 = fourier_posterior_c1s1(prior_fourier_coefficients, 0, k, beta, error_rate)
     m0_hvar = fourier_holevo_variance(m0_c1s1)
     m0_evidence = fourier_evidence(prior_fourier_coefficients, 0, k, beta, error_rate)
@@ -480,7 +501,8 @@ def fourier_expected_posterior_holevo_variance(
 
 
 def fourier_get_beta_given_k(
-    prior_fourier_coefficients: jnp.ndarray, k: int, error_rate: float = 0.0
+    prior_fourier_coefficients: jnp.ndarray, k: int,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> Tuple[float, float]:
     """
     Calculates beta that minimises the expected circular variance of a single update, for a given k.
@@ -490,12 +512,16 @@ def fourier_get_beta_given_k(
             First row for cosine, second for sine.
         k: Integer exponent
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         Float beta in [0, π) and its corresponding negative expected circular variance
 
     """
     k = jnp.array(k, dtype=int)
+    if callable(error_rate):
+        error_rate = error_rate(k)
+    
     abar = prior_fourier_coefficients[0, 0] / 2 * jnp.pi
     dbar = prior_fourier_coefficients[1, 0] / 2 * jnp.pi
     ckm1, ckp1, skm1, skp1 = _c1s1_coeffs(prior_fourier_coefficients, k, error_rate)

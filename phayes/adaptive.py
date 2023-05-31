@@ -263,7 +263,7 @@ def holevo_variance(state: PhayesState) -> float:
 
 
 def evidence(
-    state: PhayesState, m: int, k: int, beta: float, error_rate: float = 0.0
+    state: PhayesState, m: int, k: int, beta: float, error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Evaluates p(m | k, beta) = ∫p(phi) p(m | phi, k, beta) dphi
@@ -276,6 +276,7 @@ def evidence(
         k: Integer exponent
         beta: Phase shift in [0, 2π)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         Float value in [0, ∞) for p(m | k, beta)
@@ -283,8 +284,8 @@ def evidence(
     """
     return cond(
         state.fourier_mode,
-        lambda s: fourier.fourier_evidence(s.fourier_coefficients),
-        lambda s: von_mises.von_mises_evidence(*s.von_mises_parameters),
+        lambda s: fourier.fourier_evidence(s.fourier_coefficients, m, k, beta, error_rate),
+        lambda s: von_mises.von_mises_evidence(*s.von_mises_parameters, m, k, beta, error_rate),
         state,
     )
 
@@ -312,7 +313,8 @@ def pdf(
     )
 
 
-def get_beta_given_k(state: PhayesState, k: int, error_rate: float = 0.0) -> float:
+def get_beta_given_k(state: PhayesState, k: int,
+                     error_rate: Union[float, Callable[[int], float]] = 0.0,) -> float:
     """
     Calculates beta that minimises the expected circular variance of a single update, for a given k.
 
@@ -321,6 +323,7 @@ def get_beta_given_k(state: PhayesState, k: int, error_rate: float = 0.0) -> flo
             (namedtuple with fields: fourier_mode, fourier_coefficients, von_mises_parameters)
         k: Integer exponent
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         Float beta in [0, π) and its corresponding negative expected circular variance

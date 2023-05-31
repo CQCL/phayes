@@ -1,5 +1,5 @@
 from typing import Tuple, Union, Callable
-from jax import numpy as jnp
+from jax import numpy as jnp, vmap
 from jax.lax import fori_loop
 from jax.scipy import special
 from tensorflow_probability.substrates.jax.math import bessel_ive
@@ -108,7 +108,7 @@ def von_mises_update(
     m: Union[int, jnp.ndarray],
     k: Union[int, jnp.ndarray],
     beta: Union[float, jnp.ndarray],
-    error_rate: float = 0.0,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> Tuple[float, float]:
     """
     Applies a posterior update based on the measurements of a phase estimation experiment.
@@ -127,6 +127,7 @@ def von_mises_update(
         k: Vector of integer exponents (or single integer if the same across measurements)
         beta: Vector of phase shifts in [0, 2π) (or single float if the same across measurements)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         Tuple of floats, posterior mean mu in [0, 2π)
@@ -136,7 +137,11 @@ def von_mises_update(
     m = jnp.atleast_1d(jnp.array(m, dtype=int))
     k = jnp.array(k) * jnp.ones(m.size, dtype=float)
     beta = jnp.array(beta) * jnp.ones(m.size)
+    
+    if callable(error_rate):
+        error_rate = vmap(error_rate)(k)
     error_rate = jnp.array(error_rate) * jnp.ones(m.size)
+    
     kappa = jnp.array(kappa, dtype=float)
     posterior_mu, posterior_kappa = fori_loop(
         0,
@@ -268,7 +273,7 @@ def von_mises_pdf(
 
 
 def von_mises_evidence(
-    mu: jnp.ndarray, kappa: float, m: int, k: int, beta: float, error_rate: float = 0.0
+    mu: jnp.ndarray, kappa: float, m: int, k: int, beta: float, error_rate: Union[float, Callable[[int], float]] = 0.0
 ) -> float:
     """
     Evaluates p(m | k, beta) = ∫p(phi) p(m | phi, k, beta) dphi
@@ -281,12 +286,15 @@ def von_mises_evidence(
         k: Integer exponents
         beta: Phase shifts in [0, 2π)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         float value in [0, ∞) for p(m | k, beta)
 
     """
     k = jnp.array(k, dtype=float)
+    if callable(error_rate):
+        error_rate = error_rate(k)
     Ak = bessel_ive(k, kappa) / bessel_ive(0, kappa)
     return 0.5 + 0.5 * Ak * jnp.cos(k * mu + beta - m * jnp.pi) * (1 - error_rate)
 
@@ -319,7 +327,7 @@ def _posterior_m1_coeffs(
 
 
 def von_mises_expected_posterior_circular_variance(
-    mu: jnp.ndarray, kappa: float, k: int, beta: float, error_rate: float = 0.0
+    mu: jnp.ndarray, kappa: float, k: int, beta: float, error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Calculates expected circular variance of the single update posterior distribution.
@@ -332,11 +340,15 @@ def von_mises_expected_posterior_circular_variance(
         k: Integer exponent
         beta: Phase shift in [0, 2π)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         float value in [0, 1]
 
     """
+    if callable(error_rate):
+        error_rate = error_rate(k)
+    
     abar, bbar, cbar, dbar, ebar, fbar = _posterior_m1_coeffs(mu, kappa, k, error_rate)
 
     cb = jnp.cos(beta)
@@ -352,7 +364,7 @@ def von_mises_expected_posterior_circular_variance(
 
 
 def von_mises_expected_posterior_holevo_variance(
-    mu: jnp.ndarray, kappa: float, k: int, beta: float, error_rate: float = 0.0
+    mu: jnp.ndarray, kappa: float, k: int, beta: float, error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Calculates expected circular variance of the single update posterior distribution.
@@ -365,11 +377,15 @@ def von_mises_expected_posterior_holevo_variance(
         k: Integer exponent
         beta: Phase shift in [0, 2π)
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         float value in [0, 1]
 
     """
+    if callable(error_rate):
+        error_rate = error_rate(k)
+    
     abar, bbar, cbar, dbar, ebar, fbar = _posterior_m1_coeffs(mu, kappa, k, error_rate)
 
     cb = jnp.cos(beta)
@@ -391,7 +407,7 @@ def von_mises_expected_posterior_holevo_variance(
 
 
 def von_mises_get_beta_given_k(
-    mu: jnp.ndarray, kappa: float, k: int, error_rate: float = 0.0
+    mu: jnp.ndarray, kappa: float, k: int, error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> Tuple[float, float]:
     """
     Calculates beta that minimises the expected circular variance of a single update, for a given k.
@@ -401,11 +417,15 @@ def von_mises_get_beta_given_k(
         kappa: Prior von Mises concentration parameter, float in [0, ∞)
         k: Integer exponent
         error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
 
     Returns:
         Float beta in [0, π) and its corresponding expected negative circular variance
 
     """
+    if callable(error_rate):
+        error_rate = error_rate(k)
+    
     abar, bbar, cbar, dbar, ebar, fbar = _posterior_m1_coeffs(mu, kappa, k, error_rate)
     return maximise_expected_circular_variance(abar, bbar, cbar, dbar, ebar, fbar)
 
