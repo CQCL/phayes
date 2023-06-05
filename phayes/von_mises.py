@@ -252,8 +252,9 @@ def von_mises_cosine_distance(
     Returns:
         Float or vector of expected cosine distances, same shape as val
     """
+    val = jnp.atleast_1d(val)
     A = bessel_ratio(kappa)
-    return 1 - A * (jnp.cos(mu) * jnp.cos(val) + jnp.sin(mu) * jnp.sin(val))
+    return jnp.squeeze(1 - A * (jnp.cos(mu) * jnp.cos(val) + jnp.sin(mu) * jnp.sin(val)))
 
 
 def von_mises_entropy(kappa: float) -> float:
@@ -290,7 +291,8 @@ def von_mises_pdf(
     Returns:
         Float or vector of pdf evaluations, same shape as val
     """
-    return jnp.exp(kappa * (jnp.cos(val - mu) - 1)) / (2 * jnp.pi * special.i0e(kappa))
+    val = jnp.atleast_1d(val)
+    return jnp.squeeze(jnp.exp(kappa * (jnp.cos(val - mu) - 1)) / (2 * jnp.pi * special.i0e(kappa)))
 
 
 def von_mises_evidence(
