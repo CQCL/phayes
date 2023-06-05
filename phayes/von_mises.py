@@ -235,6 +235,27 @@ def von_mises_holevo_variance(
     return bessel_ratio(kappa) ** -2 - 1
 
 
+def von_mises_cosine_distance(
+    val: Union[float, jnp.ndarray],
+    mu: float,
+    kappa: float,
+) -> Union[float, jnp.ndarray]:
+    """
+    Evaluates E[1 - cos(phi - val)] where the expectation value is taken 
+    with respect the von Mises distribution.
+
+    Args:
+        val: Float or vector of values for pdf to be evaluated at
+        mu: Prior von Mises mean parameter, float in [0, 2π)
+        kappa: Prior von Mises concentration parameter, float in [0, ∞)
+
+    Returns:
+        Float or vector of expected cosine distances, same shape as val
+    """
+    A = bessel_ratio(kappa)
+    return 1 - A * (jnp.cos(mu) * jnp.cos(val) + jnp.sin(mu) * jnp.sin(val))
+
+
 def von_mises_entropy(kappa: float) -> float:
     """
     Evaluates H(mu, kappa) = - kappa * I1(kappa) / I0(kappa) + log(2 * pi * I0(kappa)),

@@ -7,6 +7,7 @@ from phayes.adaptive import circular_m1
 from phayes.adaptive import circular_mean
 from phayes.adaptive import circular_variance
 from phayes.adaptive import holevo_variance
+from phayes.adaptive import cosine_distance
 from phayes.adaptive import evidence
 from phayes.adaptive import pdf
 from phayes.adaptive import get_beta_given_k
@@ -17,6 +18,7 @@ from phayes.fourier import fourier_circular_m1
 from phayes.fourier import fourier_circular_mean
 from phayes.fourier import fourier_circular_variance
 from phayes.fourier import fourier_holevo_variance
+from phayes.fourier import fourier_cosine_distance
 from phayes.fourier import fourier_pdf
 from phayes.fourier import fourier_evidence
 from phayes.fourier import fourier_posterior_c1s1
@@ -32,6 +34,7 @@ from phayes.von_mises import von_mises_update
 from phayes.von_mises import von_mises_circular_m1
 from phayes.von_mises import von_mises_circular_variance
 from phayes.von_mises import von_mises_holevo_variance
+from phayes.von_mises import von_mises_cosine_distance
 from phayes.von_mises import von_mises_entropy
 from phayes.von_mises import von_mises_pdf
 from phayes.von_mises import von_mises_evidence

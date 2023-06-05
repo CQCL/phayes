@@ -260,6 +260,30 @@ def holevo_variance(state: PhayesState) -> float:
         lambda s: von_mises.von_mises_holevo_variance(s.von_mises_parameters[1]),
         state,
     )
+    
+
+def cosine_distance(
+    val: Union[float, jnp.ndarray], state: PhayesState
+) -> Union[float, jnp.ndarray]:
+    """
+    Evaluates E[1 - cos(phi - val)] where the expectation value is taken 
+    with respect the Fourier or von Mises distribution.
+
+    Args:
+        val: Float or vector of values for pdf to be evaluated at
+        PhayesState
+            (namedtuple with fields: fourier_mode, fourier_coefficients, von_mises_parameters)
+
+    Returns:
+        Float or vector of expected cosine distances, same shape as val
+
+    """
+    return cond(
+        state.fourier_mode,
+        lambda s: fourier.fourier_cosine_distance(val, s.fourier_coefficients),
+        lambda s: von_mises.von_mises_cosine_distance(val, *s.von_mises_parameters),
+        state,
+    )
 
 
 def evidence(

@@ -316,6 +316,29 @@ def fourier_holevo_variance(fourier_coefficients: jnp.ndarray) -> float:
     return jnp.abs(fourier_circular_m1(fourier_coefficients)) ** -2 - 1
 
 
+def _fourier_cosine_distance(val: float, fourier_coefficients: jnp.ndarray) -> float:
+    c1 = fourier_coefficients[0, 0]
+    s1 = fourier_coefficients[1, 0]
+    return 1 - jnp.pi * (c1 * jnp.cos(val) + s1 * jnp.sin(val))
+
+
+def fourier_cosine_distance(val: Union[float, jnp.ndarray], fourier_coefficients: jnp.ndarray) -> float:
+    """
+    Evaluates E[1 - cos(phi - val)] where the expectation value is taken 
+    with respect the Fourier distribution.
+
+    Args:
+        val: Float or vector of values to calculate expected cosine distance from
+        fourier_coefficients: Array of shape (2, J) storing Fourier coefficients.
+            First row for cosine, second for sine.
+
+    Returns:
+        Float or vector of expected cosine distances, same shape as val
+    """
+    val = jnp.array(val)
+    return vmap(_fourier_cosine_distance, in_axes=(0, None))(val, fourier_coefficients)
+
+
 def fourier_evidence(
     fourier_coefficients: jnp.ndarray,
     m: int,
