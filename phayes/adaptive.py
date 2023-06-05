@@ -260,13 +260,13 @@ def holevo_variance(state: PhayesState) -> float:
         lambda s: von_mises.von_mises_holevo_variance(s.von_mises_parameters[1]),
         state,
     )
-    
+
 
 def cosine_distance(
     val: Union[float, jnp.ndarray], state: PhayesState
 ) -> Union[float, jnp.ndarray]:
     """
-    Evaluates E[1 - cos(phi - val)] where the expectation value is taken 
+    Evaluates E[1 - cos(phi - val)] where the expectation value is taken
     with respect the Fourier or von Mises distribution.
 
     Args:
@@ -287,7 +287,11 @@ def cosine_distance(
 
 
 def evidence(
-    state: PhayesState, m: int, k: int, beta: float, error_rate: Union[float, Callable[[int], float]] = 0.0,
+    state: PhayesState,
+    m: int,
+    k: int,
+    beta: float,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Evaluates p(m | k, beta) = ∫p(phi) p(m | phi, k, beta) dphi
@@ -308,8 +312,12 @@ def evidence(
     """
     return cond(
         state.fourier_mode,
-        lambda s: fourier.fourier_evidence(s.fourier_coefficients, m, k, beta, error_rate),
-        lambda s: von_mises.von_mises_evidence(*s.von_mises_parameters, m, k, beta, error_rate),
+        lambda s: fourier.fourier_evidence(
+            s.fourier_coefficients, m, k, beta, error_rate
+        ),
+        lambda s: von_mises.von_mises_evidence(
+            *s.von_mises_parameters, m, k, beta, error_rate
+        ),
         state,
     )
 
@@ -337,8 +345,11 @@ def pdf(
     )
 
 
-def get_beta_given_k(state: PhayesState, k: int,
-                     error_rate: Union[float, Callable[[int], float]] = 0.0,) -> float:
+def get_beta_given_k(
+    state: PhayesState,
+    k: int,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
+) -> float:
     """
     Calculates beta that minimises the expected circular variance of a single update, for a given k.
 

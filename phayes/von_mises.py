@@ -137,11 +137,11 @@ def von_mises_update(
     m = jnp.atleast_1d(jnp.array(m, dtype=int))
     k = jnp.array(k) * jnp.ones(m.size, dtype=float)
     beta = jnp.array(beta) * jnp.ones(m.size)
-    
+
     if callable(error_rate):
         error_rate = vmap(error_rate)(k)
     error_rate = jnp.array(error_rate) * jnp.ones(m.size)
-    
+
     kappa = jnp.array(kappa, dtype=float)
     posterior_mu, posterior_kappa = fori_loop(
         0,
@@ -241,7 +241,7 @@ def von_mises_cosine_distance(
     kappa: float,
 ) -> Union[float, jnp.ndarray]:
     """
-    Evaluates E[1 - cos(phi - val)] where the expectation value is taken 
+    Evaluates E[1 - cos(phi - val)] where the expectation value is taken
     with respect the von Mises distribution.
 
     Args:
@@ -294,7 +294,12 @@ def von_mises_pdf(
 
 
 def von_mises_evidence(
-    mu: jnp.ndarray, kappa: float, m: int, k: int, beta: float, error_rate: Union[float, Callable[[int], float]] = 0.0
+    mu: jnp.ndarray,
+    kappa: float,
+    m: int,
+    k: int,
+    beta: float,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Evaluates p(m | k, beta) = ∫p(phi) p(m | phi, k, beta) dphi
@@ -348,7 +353,11 @@ def _posterior_m1_coeffs(
 
 
 def von_mises_expected_posterior_circular_variance(
-    mu: jnp.ndarray, kappa: float, k: int, beta: float, error_rate: Union[float, Callable[[int], float]] = 0.0,
+    mu: jnp.ndarray,
+    kappa: float,
+    k: int,
+    beta: float,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Calculates expected circular variance of the single update posterior distribution.
@@ -369,7 +378,7 @@ def von_mises_expected_posterior_circular_variance(
     """
     if callable(error_rate):
         error_rate = error_rate(k)
-    
+
     abar, bbar, cbar, dbar, ebar, fbar = _posterior_m1_coeffs(mu, kappa, k, error_rate)
 
     cb = jnp.cos(beta)
@@ -385,7 +394,11 @@ def von_mises_expected_posterior_circular_variance(
 
 
 def von_mises_expected_posterior_holevo_variance(
-    mu: jnp.ndarray, kappa: float, k: int, beta: float, error_rate: Union[float, Callable[[int], float]] = 0.0,
+    mu: jnp.ndarray,
+    kappa: float,
+    k: int,
+    beta: float,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
     Calculates expected circular variance of the single update posterior distribution.
@@ -406,7 +419,7 @@ def von_mises_expected_posterior_holevo_variance(
     """
     if callable(error_rate):
         error_rate = error_rate(k)
-    
+
     abar, bbar, cbar, dbar, ebar, fbar = _posterior_m1_coeffs(mu, kappa, k, error_rate)
 
     cb = jnp.cos(beta)
@@ -428,7 +441,10 @@ def von_mises_expected_posterior_holevo_variance(
 
 
 def von_mises_get_beta_given_k(
-    mu: jnp.ndarray, kappa: float, k: int, error_rate: Union[float, Callable[[int], float]] = 0.0,
+    mu: jnp.ndarray,
+    kappa: float,
+    k: int,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> Tuple[float, float]:
     """
     Calculates beta that minimises the expected circular variance of a single update, for a given k.
@@ -446,7 +462,7 @@ def von_mises_get_beta_given_k(
     """
     if callable(error_rate):
         error_rate = error_rate(k)
-    
+
     abar, bbar, cbar, dbar, ebar, fbar = _posterior_m1_coeffs(mu, kappa, k, error_rate)
     return maximise_expected_circular_variance(abar, bbar, cbar, dbar, ebar, fbar)
 

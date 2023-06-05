@@ -41,11 +41,11 @@ def fourier_update(
     m = jnp.atleast_1d(jnp.array(m, dtype=int))
     k = jnp.array(k) * jnp.ones(m.size, dtype=int)
     beta = jnp.array(beta) * jnp.ones(m.size)
-    
+
     if callable(error_rate):
         error_rate = vmap(error_rate)(k)
     error_rate = jnp.array(error_rate) * jnp.ones(m.size)
-    
+
     return fori_loop(
         0,
         m.size,
@@ -322,9 +322,11 @@ def _fourier_cosine_distance(val: float, fourier_coefficients: jnp.ndarray) -> f
     return 1 - jnp.pi * (c1 * jnp.cos(val) + s1 * jnp.sin(val))
 
 
-def fourier_cosine_distance(val: Union[float, jnp.ndarray], fourier_coefficients: jnp.ndarray) -> float:
+def fourier_cosine_distance(
+    val: Union[float, jnp.ndarray], fourier_coefficients: jnp.ndarray
+) -> float:
     """
-    Evaluates E[1 - cos(phi - val)] where the expectation value is taken 
+    Evaluates E[1 - cos(phi - val)] where the expectation value is taken
     with respect the Fourier distribution.
 
     Args:
@@ -365,7 +367,7 @@ def fourier_evidence(
     """
     if callable(error_rate):
         error_rate = error_rate(k)
-    
+
     k = jnp.array(k, dtype=int)
     gamma = beta - m * jnp.pi
     cos_gamma = jnp.cos(gamma) * (1 - error_rate)
@@ -426,7 +428,7 @@ def fourier_posterior_c1s1(
     """
     if callable(error_rate):
         error_rate = error_rate(k)
-    
+
     ckm1, ckp1, skm1, skp1 = _c1s1_coeffs(prior_fourier_coefficients, k, error_rate)
 
     gamma = beta - m * jnp.pi
@@ -476,7 +478,7 @@ def fourier_expected_posterior_circular_variance(
     """
     if callable(error_rate):
         error_rate = error_rate(k)
-    
+
     m0_c1s1 = fourier_posterior_c1s1(prior_fourier_coefficients, 0, k, beta, error_rate)
     m0_cvar = fourier_circular_variance(m0_c1s1)
     m0_evidence = fourier_evidence(prior_fourier_coefficients, 0, k, beta, error_rate)
@@ -512,7 +514,7 @@ def fourier_expected_posterior_holevo_variance(
     """
     if callable(error_rate):
         error_rate = error_rate(k)
-    
+
     m0_c1s1 = fourier_posterior_c1s1(prior_fourier_coefficients, 0, k, beta, error_rate)
     m0_hvar = fourier_holevo_variance(m0_c1s1)
     m0_evidence = fourier_evidence(prior_fourier_coefficients, 0, k, beta, error_rate)
@@ -524,7 +526,8 @@ def fourier_expected_posterior_holevo_variance(
 
 
 def fourier_get_beta_given_k(
-    prior_fourier_coefficients: jnp.ndarray, k: int,
+    prior_fourier_coefficients: jnp.ndarray,
+    k: int,
     error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> Tuple[float, float]:
     """
@@ -544,7 +547,7 @@ def fourier_get_beta_given_k(
     k = jnp.array(k, dtype=int)
     if callable(error_rate):
         error_rate = error_rate(k)
-    
+
     abar = prior_fourier_coefficients[0, 0] / 2 * jnp.pi
     dbar = prior_fourier_coefficients[1, 0] / 2 * jnp.pi
     ckm1, ckp1, skm1, skp1 = _c1s1_coeffs(prior_fourier_coefficients, k, error_rate)
