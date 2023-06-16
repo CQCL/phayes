@@ -85,6 +85,6 @@ config.update(“jax_enable_x64”, True)
 author={Duffield, Samuel},
 title={phayes: A python package for easy and efficient quantum phase estimation},
 year={2023},
-url={https://github.com/SamDuffield/phayes}
+url={https://github.com/CQCL/phayes}
 }
 ```
