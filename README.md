@@ -83,7 +83,7 @@ config.update(“jax_enable_x64”, True)
 ```
 @software{phayes,
 author={Duffield, Samuel},
-title={phayes: A python package for easy and efficient quantum phase estimation},
+title={phayes: A python package for easy and efficient Bayesian quantum phase estimation},
 year={2023},
 url={https://github.com/CQCL/phayes}
 }
