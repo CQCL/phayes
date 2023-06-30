@@ -2,6 +2,9 @@
 
 `phayes` is a python package for easy and efficient quantum phase estimation.
 
+Extensive details on Bayesian quantum phase estimation can be found in the accompanying [paper](https://arxiv.org/abs/2306.16608).
+
+
 <img src="examples/hadamard_qpe_circuit.png" width="500">
 
 Quantum phase estimation
