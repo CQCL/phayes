@@ -18,6 +18,12 @@ where $m \in \{0,1\}$ is the binary _shot_ produced by the quantum device, $\phi
 Starting with a uniform prior over $\phi$, `phayes` uses Bayesian inference to hone in on the true value (with uncertainty quantification) through repeated measurements.
 
 
+## Install
+
+```
+pip install phayes
+```
+
 ## Bayesian updates
 
 The core functions are `phayes.get_k_and_beta` and `phayes.update`, which determine the experiment parameters and then update the posterior distribution in light of a new measurement (or series of measurements)
