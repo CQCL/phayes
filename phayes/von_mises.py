@@ -403,9 +403,9 @@ def von_mises_expected_posterior_holevo_variance(
     error_rate: Union[float, Callable[[int], float]] = 0.0,
 ) -> float:
     """
-    Calculates expected circular variance of the single update posterior distribution.
+    Calculates expected Holevo variance of the single update posterior distribution.
 
-    E[var_C(p(phi | m, k, beta))] = Σ_m p(m | k, beta) var_C(p(phi | m, k, beta))
+    E[var_H(p(phi | m, k, beta))] = Σ_m p(m | k, beta) var_H(p(phi | m, k, beta))
 
     Args:
         mu: Prior von Mises mean parameter, float in [0, 2π)
@@ -416,7 +416,7 @@ def von_mises_expected_posterior_holevo_variance(
             Can be either a float or a Callable function of k
 
     Returns:
-        float value in [0, 1]
+        float value in [0, ∞)
 
     """
     if callable(error_rate):

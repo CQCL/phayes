@@ -10,6 +10,8 @@ from phayes.adaptive import holevo_variance
 from phayes.adaptive import cosine_distance
 from phayes.adaptive import evidence
 from phayes.adaptive import pdf
+from phayes.adaptive import expected_posterior_circular_variance
+from phayes.adaptive import expected_posterior_holevo_variance
 from phayes.adaptive import get_beta_given_k
 from phayes.adaptive import get_k_and_beta
 

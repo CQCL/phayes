@@ -345,6 +345,69 @@ def pdf(
     )
 
 
+def expected_posterior_circular_variance(
+    state: PhayesState,
+    k: int,
+    beta: float,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
+) -> float:
+    """
+    Calculates expected circular variance of the single update posterior distribution.
+
+    E[var_C(p(phi | m, k, beta))] = Σ_m p(m | k, beta) var_C(p(phi | m, k, beta))
+
+    Args:
+        PhayesState
+            (namedtuple with fields: fourier_mode, fourier_coefficients, von_mises_parameters)
+        k: Integer exponent
+        beta: Phase shift in [0, 2π)
+        error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
+
+    Returns:
+        float value in [0, 1]
+
+    """
+    return cond(
+        state.fourier_mode,
+        lambda s: fourier.fourier_expected_posterior_circular_variance(s.fourier_coefficients, k, beta, error_rate),
+        lambda s: von_mises.von_mises_expected_posterior_circular_variance(*s.von_mises_parameters, k, beta, error_rate),
+        state,
+    )
+
+
+def expected_posterior_holevo_variance(
+    state: PhayesState,
+    k: int,
+    beta: float,
+    error_rate: Union[float, Callable[[int], float]] = 0.0,
+) -> float:
+    """
+    Calculates expected Holevo variance of the single update posterior distribution.
+
+    E[var_H(p(phi | m, k, beta))] = Σ_m p(m | k, beta) var_H(p(phi | m, k, beta))
+
+    Args:
+        PhayesState
+            (namedtuple with fields: fourier_mode, fourier_coefficients, von_mises_parameters)
+        k: Integer exponent
+        beta: Phase shift in [0, 2π)
+        error_rate: Noise parameter, e.g. error_rate = 1 - exp(-k/T2)
+            Can be either a float or a Callable function of k
+
+    Returns:
+        float value in [0, ∞)
+
+    """
+    return cond(
+        state.fourier_mode,
+        lambda s: fourier.fourier_expected_posterior_holveo_variance(s.fourier_coefficients, k, beta, error_rate),
+        lambda s: von_mises.von_mises_expected_posterior_holevo_variance(*s.von_mises_parameters, k, beta, error_rate),
+        state,
+    )
+
+
+
 def get_beta_given_k(
     state: PhayesState,
     k: int,
