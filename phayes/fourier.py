@@ -248,7 +248,9 @@ def fourier_pdf(
         Float or vector of pdf evaluations, same shape as val
     """
     val = jnp.atleast_1d(val)
-    return jnp.squeeze(vmap(_single_fourier_pdf, in_axes=(0, None))(val, fourier_coefficients))
+    return jnp.squeeze(
+        vmap(_single_fourier_pdf, in_axes=(0, None))(val, fourier_coefficients)
+    )
 
 
 def fourier_circular_m1(fourier_coefficients: jnp.ndarray) -> complex:
@@ -338,7 +340,9 @@ def fourier_cosine_distance(
         Float or vector of expected cosine distances, same shape as val
     """
     val = jnp.atleast_1d(val)
-    return jnp.squeeze(vmap(_fourier_cosine_distance, in_axes=(0, None))(val, fourier_coefficients))
+    return jnp.squeeze(
+        vmap(_fourier_cosine_distance, in_axes=(0, None))(val, fourier_coefficients)
+    )
 
 
 def fourier_evidence(

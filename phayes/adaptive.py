@@ -370,8 +370,12 @@ def expected_posterior_circular_variance(
     """
     return cond(
         state.fourier_mode,
-        lambda s: fourier.fourier_expected_posterior_circular_variance(s.fourier_coefficients, k, beta, error_rate),
-        lambda s: von_mises.von_mises_expected_posterior_circular_variance(*s.von_mises_parameters, k, beta, error_rate),
+        lambda s: fourier.fourier_expected_posterior_circular_variance(
+            s.fourier_coefficients, k, beta, error_rate
+        ),
+        lambda s: von_mises.von_mises_expected_posterior_circular_variance(
+            *s.von_mises_parameters, k, beta, error_rate
+        ),
         state,
     )
 
@@ -401,11 +405,14 @@ def expected_posterior_holevo_variance(
     """
     return cond(
         state.fourier_mode,
-        lambda s: fourier.fourier_expected_posterior_holveo_variance(s.fourier_coefficients, k, beta, error_rate),
-        lambda s: von_mises.von_mises_expected_posterior_holevo_variance(*s.von_mises_parameters, k, beta, error_rate),
+        lambda s: fourier.fourier_expected_posterior_holveo_variance(
+            s.fourier_coefficients, k, beta, error_rate
+        ),
+        lambda s: von_mises.von_mises_expected_posterior_holevo_variance(
+            *s.von_mises_parameters, k, beta, error_rate
+        ),
         state,
     )
-
 
 
 def get_beta_given_k(
